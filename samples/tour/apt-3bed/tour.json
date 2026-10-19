@@ -1,0 +1,45 @@
+{
+  "id": "0318a281-4994-4842-a714-a26638e896dc",
+  "kind": "skybox",
+  "order": [
+    "front",
+    "right",
+    "back",
+    "left",
+    "up",
+    "down"
+  ],
+  "orientationVerified": false,
+  "faces": [
+    {
+      "slot": "front",
+      "file": "face0.jpg",
+      "source": "0318a281-4994-4842-a714-a26638e896dc_skybox0.jpg"
+    },
+    {
+      "slot": "right",
+      "file": "face1.jpg",
+      "source": "0318a281-4994-4842-a714-a26638e896dc_skybox1.jpg"
+    },
+    {
+      "slot": "back",
+      "file": "face2.jpg",
+      "source": "0318a281-4994-4842-a714-a26638e896dc_skybox2.jpg"
+    },
+    {
+      "slot": "left",
+      "file": "face3.jpg",
+      "source": "0318a281-4994-4842-a714-a26638e896dc_skybox3.jpg"
+    },
+    {
+      "slot": "up",
+      "file": "face4.jpg",
+      "source": "0318a281-4994-4842-a714-a26638e896dc_skybox4.jpg"
+    },
+    {
+      "slot": "down",
+      "file": "face5.jpg",
+      "source": "0318a281-4994-4842-a714-a26638e896dc_skybox5.jpg"
+    }
+  ]
+}

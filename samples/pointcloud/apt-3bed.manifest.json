@@ -1,0 +1,217 @@
+{
+  "source": "3 Bed apt.zip",
+  "archive": {
+    "entries": 1394,
+    "size": 1008987725
+  },
+  "clouds": 38,
+  "points": 1117942,
+  "trimmed": 6783,
+  "kept": 1111159,
+  "written": 277790,
+  "stride": 4,
+  "up": "z",
+  "bounds": {
+    "min": [
+      -8.816591262817383,
+      -1.5382782220840454,
+      -10.851455688476562
+    ],
+    "max": [
+      8.4169340133667,
+      1.9112460613250732,
+      8.48343276977539
+    ]
+  },
+  "rawBounds": {
+    "min": [
+      -9.005010604858398,
+      -9.125630378723145,
+      -12.427779197692871
+    ],
+    "max": [
+      9.809368133544922,
+      2.0146284103393555,
+      9.65378189086914
+    ]
+  },
+  "cubemaps": [
+    {
+      "id": "0318a281-4994-4842-a714-a26638e896dc",
+      "kind": "skybox"
+    },
+    {
+      "id": "04c09e60-f374-4fa8-9b76-a8e461e27970",
+      "kind": "skybox"
+    },
+    {
+      "id": "054488eb-2e43-4fea-abda-1d0f987a2903",
+      "kind": "skybox"
+    },
+    {
+      "id": "0af20d33-d41c-4486-9858-68c6dad55597",
+      "kind": "skybox"
+    },
+    {
+      "id": "0b711056-75db-45de-a768-61b171952595",
+      "kind": "skybox"
+    },
+    {
+      "id": "0cbbdefd-5ece-4784-a018-79ec9eae0e48",
+      "kind": "skybox"
+    },
+    {
+      "id": "241d92aeb6464061a865c20472846cf3",
+      "kind": "face512"
+    },
+    {
+      "id": "247860a4-9f35-46b7-a28e-5f1df85e1459",
+      "kind": "skybox"
+    },
+    {
+      "id": "2596693b214340cba508b23d9f8da361",
+      "kind": "face512"
+    },
+    {
+      "id": "37666653-d74d-4566-b0dc-b8c8a520d4da",
+      "kind": "skybox"
+    },
+    {
+      "id": "393d755adffc496fae42085fbc319945",
+      "kind": "face512"
+    },
+    {
+      "id": "4d296b7c-8074-4bc3-98e6-dbe18c69a850",
+      "kind": "skybox"
+    },
+    {
+      "id": "4d736ca9-c0aa-4752-b18c-f903eac7c0dc",
+      "kind": "skybox"
+    },
+    {
+      "id": "4dbd4bf6-c5b9-431c-8d85-88d1d3722143",
+      "kind": "skybox"
+    },
+    {
+      "id": "4e641622-0f12-43f4-bef0-c84db4a15bdc",
+      "kind": "skybox"
+    },
+    {
+      "id": "4f79d238-eb8a-4283-a15a-4f37694e7bf3",
+      "kind": "skybox"
+    },
+    {
+      "id": "53b227da24f94f74bf21c925eac5dc1e",
+      "kind": "face512"
+    },
+    {
+      "id": "53f08bcc-93ca-47fd-a5e0-ae7d86f16231",
+      "kind": "skybox"
+    },
+    {
+      "id": "5af45ca0-a11d-45c2-b2c1-e2f1a412f90c",
+      "kind": "skybox"
+    },
+    {
+      "id": "5c28ee14-fb9c-41bd-88b1-f24e49d420d9",
+      "kind": "skybox"
+    },
+    {
+      "id": "6a87994e-c92c-46a9-96b4-133699ce6095",
+      "kind": "skybox"
+    },
+    {
+      "id": "6ea12985-3789-47e5-9b45-d2f5f59d4f4e",
+      "kind": "skybox-seg"
+    },
+    {
+      "id": "6fc3c765-9084-4a78-b4b0-d598131e7d7e",
+      "kind": "skybox"
+    },
+    {
+      "id": "70144332f36746ffa747f4b4dd5705d7",
+      "kind": "face512"
+    },
+    {
+      "id": "705fce30bf9440ffbe43d9e20b486931",
+      "kind": "face512"
+    },
+    {
+      "id": "783d7ca7-daa9-4f0f-82ab-ba00c6606521",
+      "kind": "skybox"
+    },
+    {
+      "id": "8ef27fe8-cbc8-40f6-a152-2250df441ff3",
+      "kind": "skybox"
+    },
+    {
+      "id": "976bad54-a548-414d-b390-52db7da769ec",
+      "kind": "skybox-seg"
+    },
+    {
+      "id": "987f480a23f247e1b68c847c118cf216",
+      "kind": "face512"
+    },
+    {
+      "id": "9f09a731-ac0e-406e-8c88-cb60bfe6f81d",
+      "kind": "skybox"
+    },
+    {
+      "id": "a1fa07ee-e393-428b-ae16-0de5feb8bf7e",
+      "kind": "skybox"
+    },
+    {
+      "id": "a837e636-4d69-4988-861a-1c757b282199",
+      "kind": "skybox"
+    },
+    {
+      "id": "adb63fb30b1640228debf1902ef147d2",
+      "kind": "face512"
+    },
+    {
+      "id": "aded9fce-78dd-44aa-b1e5-cfe88ad0e13b",
+      "kind": "skybox"
+    },
+    {
+      "id": "b52488f1-f364-4bbc-adc9-5069f1c2f2ea",
+      "kind": "skybox-seg"
+    },
+    {
+      "id": "bbdb4f3f-f606-4a1b-b4fe-fcec7e34e86d",
+      "kind": "skybox"
+    },
+    {
+      "id": "c03c1f3b-7a62-4705-ac10-a70191b02b90",
+      "kind": "skybox"
+    },
+    {
+      "id": "cd42ebbb-4b4b-4ea1-8bc2-25cfa5b04ebf",
+      "kind": "skybox"
+    },
+    {
+      "id": "d9eeb89b-e586-445a-a025-8d7a1a8dbb85",
+      "kind": "skybox"
+    },
+    {
+      "id": "dc63fa11-378d-4730-86a8-b254ebd17ba6",
+      "kind": "skybox"
+    },
+    {
+      "id": "e786c90c-ec8c-455e-8e11-723d2f94ea41",
+      "kind": "skybox"
+    },
+    {
+      "id": "f4b84966-8316-4a72-a30f-bd29f40dcd73",
+      "kind": "skybox"
+    },
+    {
+      "id": "f6ac44ea-1c95-4322-b9b0-5a1a7c21cde4",
+      "kind": "skybox"
+    }
+  ],
+  "floorPlans": [
+    "Floor1-thumb.png"
+  ],
+  "output": "samples/pointcloud/apt-3bed.ply",
+  "tour": "C:\\Users\\emely\\Documents\\vision-updates\\vision-city-platform\\property-viewer\\samples\\tour\\apt-3bed\\tour.json"
+}

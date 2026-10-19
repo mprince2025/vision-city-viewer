@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Property Viewer — standalone demo</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #14161a; color: #e9edf2;
+    font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  header { padding: 14px 18px; border-bottom: 1px solid #262a31; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  header h1 { font-size: 15px; margin: 0; font-weight: 650; letter-spacing: .2px; }
+  header .ver { font-size: 11px; opacity: .6; border: 1px solid #333; border-radius: 999px; padding: 1px 8px; }
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-left: auto; }
+  .controls label { font-size: 12px; opacity: .8; display: flex; gap: 6px; align-items: center; }
+  select, button { font: inherit; color: inherit; background: #23272e; border: 1px solid #363b44; border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+  button:hover { background: #2b3038; }
+  main { display: grid; grid-template-columns: 320px 1fr; gap: 18px; padding: 18px; align-items: start; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+  .panel { background: #1a1d22; border: 1px solid #262a31; border-radius: 12px; padding: 14px; }
+  .panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .8px; opacity: .65; margin: 0 0 10px; }
+  .buttons { display: flex; flex-direction: column; gap: 8px; }
+  .buttons button { text-align: left; }
+  .buttons button.active { border-color: #4c8dff; background: #1e2a44; }
+  .stage-wrap { height: min(72vh, 640px); }
+  #stage { height: 100%; border: 1px solid #262a31; border-radius: 12px; overflow: hidden; }
+  .log { margin-top: 12px; font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap;
+    max-height: 160px; overflow: auto; background: #101216; border: 1px solid #22262d; border-radius: 8px; padding: 10px; }
+  .log .ok { color: #6ee7a8; } .log .err { color: #ff8f8f; } .log .info { color: #9ab0ff; }
+  .hint { font-size: 12px; opacity: .6; margin-top: 10px; }
+  textarea#planJson { width: 100%; height: 240px; margin-top: 10px; resize: vertical; color: #dfe6ee;
+    background: #101216; border: 1px solid #262a31; border-radius: 8px; padding: 10px;
+    font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; white-space: pre; }
+  .manager .controls { margin: 0; }
+  .manager .controls select { max-width: 100%; }
+  .mstatus { font-size: 12px; margin-top: 8px; opacity: .85; }
+  .mstatus.ok { color: #6ee7a8; } .mstatus.err { color: #ff8f8f; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Property Viewer</h1>
+  <span class="ver" id="ver">—</span>
+  <div class="controls">
+    <label><input type="checkbox" id="lowbw" /> Low-bandwidth (poster)</label>
+    <label>Asset base <input id="assetBase" value="" size="10" style="font:inherit;background:#23272e;border:1px solid #363b44;border-radius:8px;padding:6px 8px;color:inherit" /></label>
+  </div>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>Samples</h2>
+    <div class="buttons" id="buttons"></div>
+    <div class="hint">Each button loads one typology. Broken samples must land on the fallback screen, not throw.</div>
+    <div class="log" id="log"></div>
+  </section>
+
+  <section class="stage-wrap">
+    <div id="stage"></div>
+  </section>
+
+  <section class="panel manager">
+    <h2>Manager tools — concept model</h2>
+    <div class="controls" style="margin:0">
+      <select id="tplSel"></select>
+      <button id="btnLoad">Load template</button>
+      <button id="btnPreview">Validate + preview</button>
+      <button id="btnReset">Reset to template</button>
+      <button id="btnGlb">Download .glb</button>
+    </div>
+    <textarea id="planJson" spellcheck="false"></textarea>
+    <div class="mstatus" id="mStatus"></div>
+    <div class="hint">This is the placeholder editable by managers. "Validate + preview" runs the same floor-plan validation the app uses, then renders it. Buyers never see invalid plans — a bad plan falls back to the image.</div>
+  </section>
+</main>
+
+<script type="module">
+  import { createPropertyViewer, PROPERTY_VIEWER_VERSION } from './viewer.js';
+  import { listTemplates, templatePlan } from './seed-templates.js';
+  import { validateFloorPlan } from './validation.js';
+
+  const $ = (id) => document.getElementById(id);
+  $('ver').textContent = 'v' + PROPERTY_VIEWER_VERSION;
+  const logEl = $('log');
+  function log(msg, cls = 'info') {
+    const line = document.createElement('div');
+    line.className = cls;
+    line.textContent = new Date().toLocaleTimeString() + '  ' + msg;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  const cube = (base) => ({ base, order: 'three' });
+  const scene = (id, name, base, hotspots = []) => ({
+    id, name, ...cube(base), hotspots,
+  });
+
+  const SAMPLES = {
+    'Embed (allowed)': {
+      typology_id: 1, property_id: 1, type_name: 'A',
+      viewer_type: 'embed',
+      viewer_config: { url: 'https://my.matterport.com/show/?m=SxQL3iGyoDo', title: 'Show unit 3D tour', aspect: '16 / 9' },
+    },
+    'Tour 360 — cubemap': {
+      typology_id: 2, property_id: 1, type_name: 'B',
+      viewer_type: 'tour360',
+      viewer_config: {
+        format: 'cubemap',
+        startScene: 'entry',
+        scenes: [
+          scene('entry', 'Entrance', 'samples/tour/entry', [
+            { target: 'living', yaw: 0, pitch: -6, label: 'Living / Dining' },
+          ]),
+          scene('living', 'Living / Dining', 'samples/tour/living', [
+            { target: 'kitchen', yaw: 90, pitch: -5, label: 'Kitchen' },
+            { target: 'entry', yaw: -120, pitch: -5, label: 'Entrance' },
+          ]),
+          scene('kitchen', 'Kitchen', 'samples/tour/kitchen', [
+            { target: 'bedroom-1', yaw: 45, pitch: -8, label: 'Bedroom 1' },
+            { target: 'living', yaw: 180, pitch: -5, label: 'Living / Dining' },
+          ]),
+          scene('bedroom-1', 'Bedroom 1 (Main)', 'samples/tour/bedroom-1', [
+            { target: 'kitchen', yaw: -90, pitch: -6, label: 'Kitchen' },
+          ]),
+        ],
+      },
+    },
+    'Tour 360 — equirect': {
+      typology_id: 3, property_id: 2, type_name: 'C',
+      viewer_type: 'tour360',
+      viewer_config: {
+        format: 'equirect',
+        scenes: [{ id: 'pano', name: 'Sample pano', panorama: 'samples/equirect/sample-equirect.jpg', hotspots: [] }],
+      },
+    },
+    '3D model — duck.glb': {
+      typology_id: 4, property_id: 2, type_name: 'D',
+      viewer_type: 'model3d',
+      viewer_config: { url: 'samples/models/duck.glb', scale: 1, autoRotate: true, draco: true, xr: true },
+    },
+    'No viewer (none)': {
+      typology_id: 5, property_id: 3, type_name: 'E',
+      viewer_type: 'none',
+      viewer_config: {},
+      fallback_image_url: 'samples/tour/living/face4.jpg',
+    },
+    'Procedural — 3-bed apartment': {
+      typology_id: 101, property_id: 4, type_name: 'Procedural apartment', typology: 'apartment', beds: 3,
+      viewer_type: 'procedural', viewer_config: templatePlan('apartment-3'),
+    },
+    'Procedural — 2-bed rowhouse': {
+      typology_id: 102, property_id: 5, type_name: 'Procedural rowhouse', typology: 'rowhouse', beds: 2,
+      viewer_type: 'procedural', viewer_config: templatePlan('rowhouse-2'),
+    },
+    'Procedural — 5-bed villa': {
+      typology_id: 103, property_id: 6, type_name: 'Procedural villa', typology: 'villa', beds: 5,
+      viewer_type: 'procedural', viewer_config: templatePlan('villa-5'),
+    },
+    'Point cloud — XYZ scan': {
+      typology_id: 110, property_id: 9, type_name: 'Scan (XYZ)',
+      viewer_type: 'pointcloud',
+      viewer_config: { url: 'samples/pointcloud/sample.xyz', format: 'xyz', colorMode: 'rgb' },
+    },
+    'Point cloud — PLY scan': {
+      typology_id: 111, property_id: 9, type_name: 'Scan (PLY)',
+      viewer_type: 'pointcloud',
+      viewer_config: { url: 'samples/pointcloud/sample.ply', format: 'ply', colorMode: 'height' },
+    },
+    'Point cloud — scanned house (MatterPak)': {
+      typology_id: 112, property_id: 10, type_name: 'Scanned house (MatterPak)',
+      viewer_type: 'pointcloud',
+      viewer_config: { url: 'samples/pointcloud/matterpak-house.ply', format: 'ply', colorMode: 'rgb', background: '#0d0f12' },
+    },
+    'BROKEN — embed http': {
+      viewer_type: 'embed', viewer_config: { url: 'http://evil.example.com/x' },
+    },
+    'BROKEN — embed bad host': {
+      viewer_type: 'embed', viewer_config: { url: 'https://example.com/tour' },
+    },
+    'BROKEN — model 404': {
+      viewer_type: 'model3d', viewer_config: { url: 'samples/models/missing.glb' },
+    },
+    'BROKEN — point cloud 404': {
+      viewer_type: 'pointcloud', viewer_config: { url: 'samples/pointcloud/missing.xyz', format: 'xyz' },
+    },
+    'BROKEN — tour empty': {
+      viewer_type: 'tour360', viewer_config: { format: 'cubemap', scenes: [] },
+    },
+    'BROKEN — unknown type': {
+      viewer_type: 'holodeck', viewer_config: {},
+    },
+    'BROKEN — procedural empty plan': {
+      viewer_type: 'procedural', viewer_config: { storeys: [] },
+      fallback_image_url: 'samples/tour/living/face4.jpg',
+    },
+  };
+
+  const buttonsEl = $('buttons');
+  Object.keys(SAMPLES).forEach((key) => {
+    const b = document.createElement('button');
+    b.textContent = key;
+    b.dataset.key = key;
+    b.addEventListener('click', () => {
+      [...buttonsEl.children].forEach((c) => c.classList.remove('active'));
+      b.classList.add('active');
+      log('render → ' + key, 'info');
+      viewer.setLowBandwidth($('lowbw').checked);
+      viewer.render(SAMPLES[key]);
+    });
+    buttonsEl.appendChild(b);
+  });
+
+  window.__pvEvents = [];
+  const viewer = createPropertyViewer($('stage'), {
+    assetBase: '',
+    fallbackImages: ['samples/tour/entry/face0.jpg', 'samples/tour/kitchen/face0.jpg'],
+    onReady: (kind) => {
+      window.__pvEvents.push('ready:' + kind);
+      log('ready: ' + kind, 'ok');
+      if (kind === 'procedural') setStatus('Showing a concept model (placeholder — no real scan configured for this typology).', '');
+    },
+    onError: (err) => { const m = err && err.message ? err.message : String(err); window.__pvEvents.push('error:' + m); log('error: ' + m, 'err'); },
+  });
+
+  $('lowbw').addEventListener('change', () => {
+    viewer.setLowBandwidth($('lowbw').checked);
+    log('low-bandwidth = ' + $('lowbw').checked);
+  });
+
+  /* ---------------------------- manager tools ---------------------------- */
+  const tplSel = $('tplSel');
+  const planJson = $('planJson');
+  const mStatus = $('mStatus');
+  const setStatus = (msg, cls = '') => { mStatus.textContent = msg; mStatus.className = 'mstatus ' + cls; };
+
+  listTemplates().forEach((t) => {
+    const o = document.createElement('option');
+    o.value = t.id;
+    o.textContent = `${t.name} — ${t.typology}, ${t.beds} bed`;
+    tplSel.appendChild(o);
+  });
+  const loadTemplate = (id) => { planJson.value = JSON.stringify(templatePlan(id), null, 2); setStatus('Loaded template "' + id + '"'); };
+  tplSel.value = 'villa-4';
+  loadTemplate('villa-4');
+
+  $('btnLoad').addEventListener('click', () => loadTemplate(tplSel.value));
+  $('btnReset').addEventListener('click', () => loadTemplate(tplSel.value));
+  $('btnPreview').addEventListener('click', () => {
+    let plan;
+    try { plan = JSON.parse(planJson.value); } catch (e) { return setStatus('Invalid JSON: ' + e.message, 'err'); }
+    const res = validateFloorPlan(plan);
+    if (!res.ok) return setStatus('Invalid floor plan: ' + res.errors[0], 'err');
+    setStatus(`Valid plan (${res.value.storeys.length} storey(s)) — rendering concept model…`, 'ok');
+    [...buttonsEl.children].forEach((c) => c.classList.remove('active'));
+    viewer.render({
+      typology_id: 900, property_id: 0, type_name: 'Concept model',
+      viewer_type: 'procedural', viewer_config: plan,
+      fallback_image_url: 'samples/tour/living/face4.jpg',
+    });
+  });
+  $('btnGlb').addEventListener('click', async () => {
+    const proc = viewer._proc;
+    if (!proc) return setStatus('Render a concept model first.', 'err');
+    try {
+      const glb = await proc.captureGlb();
+      const blob = new Blob([glb], { type: 'model/gltf-binary' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'concept-model.glb';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      setStatus('Exported concept-model.glb', 'ok');
+    } catch (e) {
+      setStatus('Export failed: ' + (e && e.message ? e.message : e), 'err');
+    }
+  });
+
+  window.__pv = viewer;
+  window.__pvSamples = SAMPLES;
+  log('Property Viewer ' + PROPERTY_VIEWER_VERSION + ' ready');
+
+  // auto-open the cubemap tour so a smoke test has something to assert
+  buttonsEl.querySelector('[data-key="Tour 360 — cubemap"]').click();
+</script>
+</body>
+</html>

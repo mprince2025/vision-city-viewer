@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vision City — Upload &amp; View</title>
+<link rel="icon" href="data:," />
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; overflow: hidden; background: #0d0f12; color: #eef2f6;
+    font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+
+  #app { height: 100vh; }
+
+  .topbar { display: flex; align-items: center; gap: 16px; height: 56px; flex: 0 0 auto;
+    padding: 0 16px; background: #14161a; border-bottom: 1px solid #23262c; }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: .3px; }
+  .brand .mark { width: 20px; height: 20px; border-radius: 6px; background: linear-gradient(135deg, #90c0c0, #c0c0f0); }
+  .brand small { font-weight: 500; opacity: .55; letter-spacing: 0; }
+
+  .title { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+  .title .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .title .badge { font-size: 11px; opacity: .7; border: 1px solid #333; border-radius: 999px; padding: 1px 9px; white-space: nowrap; }
+
+  .actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+  .icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px;
+    color: inherit; background: #23272e; border: 1px solid #363b44; border-radius: 999px; cursor: pointer; font-size: 16px; }
+  .icon-btn:hover { background: #2b3038; }
+  .btn-upload { display: inline-flex; align-items: center; gap: 7px; color: inherit; background: #23272e;
+    border: 1px solid #363b44; border-radius: 999px; padding: 8px 14px; font: inherit; cursor: pointer; white-space: nowrap; }
+  .btn-upload:hover { background: #2b3038; }
+  .btn-upload.primary { background: #d62839; border-color: #e85d5d; }
+  .btn-upload.primary:hover { background: #b21e2d; }
+
+  .scan-modes { display: flex; background: #23272e; border: 1px solid #363b44; border-radius: 999px; overflow: hidden; }
+  .scan-modes[hidden] { display: none; }
+  .scan-modes button { appearance: none; background: transparent; border: 0; color: inherit; font: inherit;
+    padding: 7px 13px; cursor: pointer; opacity: .68; white-space: nowrap; }
+  .scan-modes button:hover { opacity: .9; }
+  .scan-modes button.on { background: #2f6f8f; opacity: 1; }
+  .scan-modes button[hidden] { display: none; }
+
+  .stage { position: relative; flex: 1 1 auto; min-height: 0; height: 100vh; }
+  #stage { position: absolute; inset: 0; }
+  /* full-bleed: no rounded frame, no inner chrome (the page header carries it) */
+  #stage .pv-root { border-radius: 0; min-height: 0; }
+  #stage .pv-stage { border-radius: 0; }
+
+  .empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    padding: 24px; background: radial-gradient(1200px 600px at 50% 30%, #171b21, #0d0f12); z-index: 5; }
+  .empty[hidden] { display: none; }
+  .empty.drag { background: rgba(63, 132, 178, .18); }
+  .empty-card { max-width: 560px; text-align: center; padding: 34px 30px; margin-top: 50px; border: 1px dashed #3a4048;
+    border-radius: 18px; background: #12151a; }
+  .empty.drag .empty-card { border-color: rgba(160, 210, 240, .8); }
+  .empty-card h1 { margin: 0 0 8px; font-size: 20px; }
+  .empty-card p { margin: 0 0 16px; opacity: .7; }
+  .empty-card .formats { margin: 14px 0 20px; font-size: 12.5px; opacity: .8; line-height: 1.9; }
+  .empty-card .formats code { background: #23272e; border: 1px solid #333; border-radius: 6px; padding: 1px 6px; margin: 0 2px; }
+  .empty-card .hint { display: block; margin-top: 14px; font-size: 11.5px; opacity: .5; }
+
+  .toast { position: absolute; left: 50%; bottom: 26px; transform: translate(-50%, 20px); z-index: 8;
+    max-width: 86vw; padding: 10px 16px; border-radius: 999px; background: #3a2050; border: 1px solid #5a3a78;
+    color: #f0e6ff; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 720px) {
+    .brand small { display: none; }
+    .title .name { max-width: 40vw; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  
+
+  <main class="stage" id="stageWrap">
+    <div id="stage"></div>
+    <div class="empty" id="empty">
+      <div class="empty-card">
+        <h1>Drop a 3D or VR file to view it</h1>
+        <p>Everything runs locally in your browser — nothing is uploaded to a server.</p>
+        <div class="formats">
+          <div>3D model &nbsp;<code>.glb</code><code>.gltf</code><code>.obj</code><code>.stl</code></div>
+          <div>Point cloud &nbsp;<code>.ply</code><code>.xyz</code><code>.pts</code><code>.asc</code><code>.txt</code><code>.csv</code></div>
+          <div>360° photo &nbsp;<code>.jpg</code><code>.png</code><code>.webp</code></div>
+          <div>iPhone LiDAR scan &nbsp;<code>.zip</code></div>
+        </div>
+        <button class="btn-upload primary" id="btnUpload2" type="button">Choose a file</button>
+        <span class="hint">Or drag a file anywhere onto the page.</span>
+      </div>
+    </div>
+    <div class="toast" id="toast"></div>
+  </main>
+</div>
+<input type="file" id="fileInput"
+  accept=".glb,.gltf,.obj,.stl,.ply,.xyz,.pts,.asc,.txt,.csv,.jpg,.jpeg,.png,.webp,.avif,.zip" hidden />
+
+<script type="module">
+  import { createPropertyViewer, PROPERTY_VIEWER_VERSION } from './viewer.js';
+  import { decodeScanZip } from './scanzip-browser.js';
+
+  const $ = (id) => document.getElementById(id);
+  const setText = (id, text) => { const n = $(id); if (n) n.textContent = text; };
+  setText('ver', '· viewer v' + PROPERTY_VIEWER_VERSION);
+
+  const MODEL = ['glb', 'gltf', 'obj', 'stl'];
+  const POINT = ['ply', 'xyz', 'pts', 'asc', 'txt', 'csv'];
+  const PANO = ['jpg', 'jpeg', 'png', 'webp', 'avif'];
+  const SCAN = ['zip'];
+  const LABELS = { model3d: '3D model', pointcloud: 'Point cloud', tour360: '360° photo' };
+
+  const viewer = createPropertyViewer($('stage'), {
+    assetBase: '',
+    chrome: false,
+    onReady: (kind) => { setText('fileBadge', LABELS[kind] || ''); },
+    onError: () => { setText('fileBadge', 'Could not display'); },
+  });
+
+  const extOf = (file) => (file.name.toLowerCase().split('.').pop() || '');
+
+  /** Decide the viewer type + config for a dropped/picked file (or null if unsupported). */
+  function rowFor(file, url) {
+    const ext = extOf(file);
+    if (MODEL.includes(ext)) {
+      return { type_name: file.name, viewer_type: 'model3d',
+        viewer_config: { url, format: ext, scale: 1, autoRotate: false, draco: true, xr: true } };
+    }
+    if (POINT.includes(ext)) {
+      return { type_name: file.name, viewer_type: 'pointcloud',
+        viewer_config: { url, format: ext === 'ply' ? 'ply' : 'xyz', colorMode: 'rgb', maxPoints: 1500000 } };
+    }
+    if (PANO.includes(ext)) {
+      return { type_name: file.name, viewer_type: 'tour360',
+        viewer_config: { format: 'equirect', startScene: 'pano',
+          scenes: [{ id: 'pano', name: file.name, panorama: url, hotspots: [] }] } };
+    }
+    return null;
+  }
+
+  let objectUrl = null;
+  let scan = null;      // { rows, revoke, info } while a .zip is loaded
+  let toastTimer = null;
+  function toast(msg, sticky) {
+    const t = $('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    if (!sticky) toastTimer = setTimeout(() => t.classList.remove('show'), 4200);
+  }
+  function hideToast() { clearTimeout(toastTimer); $('toast').classList.remove('show'); }
+
+  function clearScan() {
+    if (scan) { scan.revoke(); scan = null; }
+    window.__pvScan = null;
+    const sm = $('scanModes'); if (sm) sm.hidden = true;
+  }
+
+  function selectScanMode(mode) {
+    if (!scan || !scan.rows[mode]) return;
+    const sm = $('scanModes');
+    if (sm) for (const b of sm.querySelectorAll('button')) b.classList.toggle('on', b.dataset.mode === mode);
+    $('empty').hidden = true;
+    setText('fileBadge', LABELS[mode] || '');
+    viewer.render(scan.rows[mode]);
+  }
+
+  async function showScan(file) {
+    if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; }
+    clearScan();
+    $('empty').hidden = true;
+    setText('fileName', file.name);
+    setText('fileBadge', 'Reading scan…');
+    toast('Decoding the scan archive — this runs locally. The first sweep appears as soon as it is ready…', true);
+
+    let previewed = false;
+    let res;
+    try {
+      res = await decodeScanZip(file, {
+        onProgress: (p) => {
+          if (p.stage === 'clouds' && p.total) {
+            setText('fileBadge', `Reading scan… ${Math.round((p.done / p.total) * 100)}% (${p.done}/${p.total})`);
+          } else if (p.stage === 'tour') {
+            setText('fileBadge', 'Solving 360° tour…');
+          }
+        },
+        onPreview: (pv) => {
+          // Paint the first decoded sweep immediately so the screen is never blank.
+          previewed = true;
+          try {
+            viewer.render({ type_name: file.name, viewer_type: 'pointcloud', viewer_config: { url: pv.url, format: 'ply', colorMode: 'height', maxPoints: 1500000, pointSize: 0 } });
+            hideToast();
+          } catch { /* preview is best-effort */ }
+        },
+      });
+    } catch (e) {
+      res = { ok: false, error: e && e.message };
+    }
+    hideToast();
+    if (!res.ok) {
+      setText('fileBadge', '');
+      $('empty').hidden = !previewed;
+      toast(`Couldn't read "${file.name}" — ${res.error || 'no point cloud or skybox found'}.`, true);
+      return;
+    }
+    scan = { rows: res.rows, revoke: res.revoke, info: res.info };
+    window.__pvScan = scan;
+
+    const modes = ['tour360', 'pointcloud'].filter((m) => res.rows[m]);
+    const modesEl = $('scanModes');
+    if (modesEl) {
+      modesEl.hidden = modes.length < 2;
+      for (const b of modesEl.querySelectorAll('button')) b.hidden = !modes.includes(b.dataset.mode);
+    }
+    // A scan loads straight into the 360° tour; the point cloud stays available as a fallback.
+    selectScanMode(modes.includes('tour360') ? 'tour360' : modes[0]);
+  }
+
+  function showFile(file) {
+    if (!file) return undefined;
+    const ext = extOf(file);
+    if (SCAN.includes(ext)) return showScan(file);
+
+    clearScan();
+    const url = URL.createObjectURL(file);
+    const row = rowFor(file, url);
+    if (!row) {
+      URL.revokeObjectURL(url);
+      toast(`Can't display "${file.name}" — try .glb/.gltf/.obj/.stl, a point cloud, a 360° photo, or a scan .zip.`);
+      return undefined;
+    }
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    objectUrl = url;
+
+    $('empty').hidden = true;
+    setText('fileName', file.name);
+    setText('fileBadge', LABELS[row.viewer_type] || '');
+    viewer.render(row);
+    return undefined;
+  }
+
+  const scanModes = $('scanModes');
+  if (scanModes) scanModes.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-mode]');
+    if (btn) selectScanMode(btn.dataset.mode);
+  });
+
+  const fileInput = $('fileInput');
+  const wrap = $('stageWrap');
+  $('btnUpload2').addEventListener('click', () => fileInput.click());
+  const btnFs = $('btnFs');
+  if (btnFs) btnFs.addEventListener('click', () => viewer.toggleFullscreen());
+  fileInput.addEventListener('change', () => {
+    const f = fileInput.files && fileInput.files[0];
+    fileInput.value = '';
+    showFile(f);
+  });
+
+  ['dragenter', 'dragover'].forEach((ev) => wrap.addEventListener(ev, (e) => {
+    e.preventDefault(); $('empty').classList.add('drag');
+  }));
+  ['dragleave', 'dragend'].forEach((ev) => wrap.addEventListener(ev, (e) => {
+    if (!wrap.contains(e.relatedTarget)) $('empty').classList.remove('drag');
+  }));
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => {
+    e.preventDefault();
+    $('empty').classList.remove('drag');
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    showFile(f);
+  });
+
+  window.__pv = viewer;
+  window.__pvShowFile = showFile;
+  window.__pvSelectScanMode = selectScanMode;
+  window.__pvSupported = { MODEL, POINT, PANO, SCAN };
+</script>
+</body>
+</html>

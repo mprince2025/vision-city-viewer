@@ -1,0 +1,11 @@
+{
+  "name": "property-viewer",
+  "private": true,
+  "type": "module",
+  "description": "Standalone Property Viewer: embed / tour360 / model3d / procedural (concept model) with shared validation.",
+  "scripts": {
+    "test": "node --test",
+    "decimate": "node scripts/pointcloud-decimate.js",
+    "scanzip": "node scripts/scanzip-decode.js"
+  }
+}
