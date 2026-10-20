@@ -121,6 +121,15 @@
 
   const extOf = (file) => (file.name.toLowerCase().split('.').pop() || '');
 
+  /** Hide the bottom-left view-mode pill (Dollhouse / Floor plan / Walkthrough / Measure). */
+  function hideModePill(row) {
+    if (!row || !row.viewer_config) return row;
+    const vc = row.viewer_config;
+    vc.ui = vc.ui || {};
+    vc.ui.controls = { ...(vc.ui.controls || {}), mode: false };
+    return row;
+  }
+
   /** Decide the viewer type + config for a dropped/picked file (or null if unsupported). */
   function rowFor(file, url) {
     const ext = extOf(file);
@@ -133,9 +142,9 @@
         viewer_config: { url, format: ext === 'ply' ? 'ply' : 'xyz', colorMode: 'rgb', maxPoints: 1500000 } };
     }
     if (PANO.includes(ext)) {
-      return { type_name: file.name, viewer_type: 'tour360',
+      return hideModePill({ type_name: file.name, viewer_type: 'tour360',
         viewer_config: { format: 'equirect', startScene: 'pano',
-          scenes: [{ id: 'pano', name: file.name, panorama: url, hotspots: [] }] } };
+          scenes: [{ id: 'pano', name: file.name, panorama: url, hotspots: [] }] } });
     }
     return null;
   }
@@ -206,6 +215,7 @@
     }
     scan = { rows: res.rows, revoke: res.revoke, info: res.info };
     window.__pvScan = scan;
+    hideModePill(scan.rows.tour360);
 
     const modes = ['tour360', 'pointcloud'].filter((m) => res.rows[m]);
     const modesEl = $('scanModes');
